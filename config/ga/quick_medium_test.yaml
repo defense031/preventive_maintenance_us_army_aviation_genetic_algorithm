@@ -1,0 +1,91 @@
+# Quick test config for MEDIUM chromosome (31 genes)
+# Verifies hierarchical fleet-split + 2-subtree structure works
+
+name: "quick_medium_test"
+description: "Quick test for medium config with fleet split"
+version: "1.0.0"
+
+population:
+  size: 10
+  elite_count: 2
+
+operators:
+  crossover_rate: 0.70
+  mutation_rate: 0.30
+  blx_alpha: 0.5
+  mutation_start_rate: 0.30
+  mutation_min_rate: 0.10
+  mutation_start_sigma: 0.30
+  mutation_min_sigma: 0.10
+  mutation_decay_point: 0.75
+
+selection:
+  method: "tournament"
+  tournament_size: 3
+
+fitness:
+  weights:
+    mission_success: 0.70
+    operational_readiness: 0.15
+    flight_hours: 0.15
+  baseline_max_flight_hours: 4563.55
+
+evaluation:
+  episodes_per_chromosome: 5
+  parallel_workers: 4
+
+convergence:
+  max_generations: 3
+  early_stopping_patience: 10
+  improvement_threshold: 0.001
+
+checkpointing:
+  enabled: false
+  frequency: 10
+  save_dir: "results/quick_medium_test_checkpoints"
+  filename_pattern: "checkpoint_gen{generation:03d}.pkl"
+
+logging:
+  verbose: true
+  log_dir: "results/quick_medium_test_logs"
+  log_frequency: 1
+  track_diversity: true
+  track_statistics: true
+
+chromosome:
+  config_type: "medium"  # HIERARCHICAL: 1 fleet split + 2 subtrees
+  tree_depth: 3
+  n_features: 5
+  n_fleet_features: 7
+  n_splits: 7
+  n_leaves: 8
+  n_buckets: 4
+  n_genes: 31
+
+feature_encoder:
+  config_path: "config/features/medium_dt.yaml"
+  features:
+    - observed_rul
+    - hours_to_major
+    - hours_to_minor
+    - da_line_deviation_positive
+    - da_line_deviation_negative
+  fleet_features:
+    - fmc_count
+    - mean_observed_rul
+    - min_observed_rul
+    - mean_hours_to_major
+    - min_hours_to_major
+    - mean_hours_to_minor
+    - min_hours_to_minor
+
+simulation:
+  config_path: "config/default.yaml"
+  seed: 42
+
+output:
+  results_dir: "results/quick_medium_test"
+  save_best_chromosome: true
+  save_final_population: false
+  save_fitness_history: false
+  generate_plots: false

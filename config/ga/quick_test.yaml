@@ -1,0 +1,81 @@
+# Quick Test GA Configuration
+# Medium-duration test run (~15-20 minutes)
+# Use for development and debugging
+
+name: "ga_quick_test"
+description: "Medium-sized configuration for testing GA optimization"
+version: "1.0.0"
+
+# Population (small for reasonable speed)
+population:
+  size: 10
+  elite_count: 2  # 20% elitism
+
+# Genetic operators (same as production)
+operators:
+  crossover_rate: 0.70
+  mutation_rate: 0.30
+  blx_alpha: 0.5
+
+# Selection
+selection:
+  method: "tournament"
+  tournament_size: 3
+
+# Fitness function (same weights as production)
+fitness:
+  weights:
+    mission_success: 0.70
+    operational_readiness: 0.15
+    flight_hours: 0.15
+  baseline_max_flight_hours: 4563.55
+
+# Evaluation (reduced episodes for speed)
+evaluation:
+  episodes_per_chromosome: 20  # Reduced from 100
+  parallel_workers: 4
+
+# Convergence (shorter run than production)
+convergence:
+  max_generations: 10
+  early_stopping_patience: 5
+  improvement_threshold: 0.001
+
+# Checkpointing (enabled but infrequent)
+checkpointing:
+  enabled: true
+  frequency: 5
+  save_dir: "results/ga_checkpoints_quick"
+  filename_pattern: "checkpoint_gen{generation:03d}.pkl"
+
+# Logging
+logging:
+  verbose: true
+  log_dir: "results/ga_logs_quick"
+  log_frequency: 1
+  track_diversity: true
+  track_statistics: true
+
+# Chromosome structure
+chromosome:
+  tree_depth: 3
+  n_features: 5
+  n_splits: 7   # 2^3 - 1
+  n_leaves: 8   # 2^3
+  n_buckets: 4
+
+# Configuration paths
+feature_encoder:
+  config_path: "config/features/simple_dt.yaml"
+
+simulation:
+  config_path: "config/default.yaml"
+  seed: 42
+
+# Output
+output:
+  results_dir: "results/ga_quick_test"
+  save_best_chromosome: true
+  save_final_population: true
+  save_fitness_history: true
+  generate_plots: true

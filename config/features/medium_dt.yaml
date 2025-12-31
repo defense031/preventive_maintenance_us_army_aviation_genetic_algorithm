@@ -1,0 +1,150 @@
+# ====================================================================================
+# MEDIUM DECISION TREE FEATURE CONFIGURATION
+# ====================================================================================
+# Feature set for hierarchical GA-optimized decision tree with fleet context.
+# Includes per-aircraft features PLUS fleet-level features for context splitting.
+#
+# Use Case: Medium config - Fleet split + 2 per-aircraft subtrees
+# Dimensionality: 4 per-aircraft + 8 fleet = 12 features per aircraft row
+# Chromosome Size (depth=3): 31 genes (2 fleet + 2×14 subtrees + 1 tiebreak)
+# ====================================================================================
+
+name: "medium_dt"
+description: "Medium config - Per-aircraft features + fleet context for hierarchical tree"
+policy_type: "decision_tree"
+tree_depth: 3
+n_buckets: 8
+
+# ====================================================================================
+# PER-AIRCRAFT FEATURES (4 features × 8 aircraft)
+# ====================================================================================
+per_aircraft_features:
+  - name: "observed_rul"
+    type: "float"
+    source: "aircraft.observed_rul"
+    description: "Remaining useful life from sensor (with noise)"
+    normalization: "none"
+    bounds: [0, 400]
+    priority: "high"
+
+  - name: "hours_to_major"
+    type: "float"
+    source: "derived"
+    formula: "500 - aircraft.hours_since_major_phase"
+    description: "Hours until major phase maintenance required"
+    normalization: "none"
+    bounds: [-2, 500]
+    priority: "high"
+
+  - name: "hours_to_minor"
+    type: "float"
+    source: "derived"
+    formula: "250 - aircraft.hours_since_minor_phase"
+    description: "Hours until minor phase maintenance required"
+    normalization: "none"
+    bounds: [-2, 250]
+    priority: "high"
+
+  - name: "da_line_deviation"
+    type: "float"
+    source: "derived"
+    formula: "da_line_deviation"
+    description: "Signed deviation from ideal DA line. Positive = behind schedule (should fly), Negative = ahead (protect)"
+    normalization: "none"
+    bounds: [-500, 500]
+    priority: "medium"
+
+# ====================================================================================
+# FLEET-LEVEL FEATURES (7 features - used for fleet context split)
+# ====================================================================================
+fleet_features:
+  - name: "fmc_count"
+    type: "int"
+    source: "derived"
+    formula: "sum([1 for ac in aircraft if ac.status == 'FMC'])"
+    description: "Number of FMC aircraft"
+    normalization: "minmax"
+    bounds: [0, 8]
+    priority: "high"
+
+  - name: "mean_observed_rul"
+    type: "float"
+    source: "derived"
+    formula: "sum([ac.observed_rul for ac in aircraft]) / len(aircraft)"
+    description: "Mean observed RUL across fleet"
+    normalization: "minmax"
+    bounds: [0, 400]
+    priority: "medium"
+
+  - name: "min_observed_rul"
+    type: "float"
+    source: "derived"
+    formula: "min([ac.observed_rul for ac in aircraft])"
+    description: "Minimum observed RUL in fleet"
+    normalization: "minmax"
+    bounds: [0, 400]
+    priority: "medium"
+
+  - name: "mean_hours_to_major"
+    type: "float"
+    source: "derived"
+    formula: "sum([500 - ac.hours_since_major_phase for ac in aircraft]) / len(aircraft)"
+    description: "Mean hours to major phase across fleet"
+    normalization: "minmax"
+    bounds: [-2, 500]
+    priority: "medium"
+
+  - name: "min_hours_to_major"
+    type: "float"
+    source: "derived"
+    formula: "min([500 - ac.hours_since_major_phase for ac in aircraft])"
+    description: "Minimum hours to major phase in fleet"
+    normalization: "minmax"
+    bounds: [-2, 500]
+    priority: "medium"
+
+  - name: "mission_peak_14day"
+    type: "int"
+    source: "derived"
+    formula: "max([m.required_aircraft for m in mission_forecast[:14]])"
+    description: "Peak mission demand in next 14 days"
+    normalization: "minmax"
+    bounds: [0, 8]
+    priority: "high"
+
+  - name: "mission_weighted_14day"
+    type: "float"
+    source: "derived"
+    formula: "sum([mission_forecast[i].required_aircraft * (1.0 - i * 0.9 / 13.0) for i in range(min(14, len(mission_forecast)))])"
+    description: "Weighted mission demand (linear decay: day 0=100%, day 13=10%)"
+    normalization: "minmax"
+    bounds: [0, 54]
+    priority: "high"
+
+# ====================================================================================
+# MISSION FEATURES - DISABLED FOR MEDIUM CONFIG
+# ====================================================================================
+mission_features: []
+
+# ====================================================================================
+# TEMPORAL FEATURES - DISABLED FOR MEDIUM CONFIG
+# ====================================================================================
+temporal_features: []
+
+# ====================================================================================
+# NORMALIZATION SETTINGS
+# ====================================================================================
+normalization:
+  method: "minmax"
+  handle_missing: "zero"
+  clip_outliers: true
+  outlier_std_threshold: 3.0
+
+# ====================================================================================
+# ENCODING SETTINGS
+# ====================================================================================
+encoding:
+  categorical_method: "binary"
+  status_encoding:
+    FMC: 1.0
+    NMC: 0.0

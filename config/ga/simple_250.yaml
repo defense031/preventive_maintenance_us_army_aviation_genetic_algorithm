@@ -1,0 +1,112 @@
+# ====================================================================================
+# GENETIC ALGORITHM CONFIGURATION - SIMPLE 250 GENERATIONS
+# ====================================================================================
+# Extended run with path-aware threshold constraints
+# 250 generations, early stopping after 50 gens without improvement > 0.001
+# ====================================================================================
+
+name: "ga_simple_250"
+description: "Simple config with 250 generations, path-aware constraints"
+version: "1.0.0"
+
+# ====================================================================================
+# POPULATION SETTINGS
+# ====================================================================================
+population:
+  size: 50  # Large population for broad search space coverage
+  elite_count: 4  # 8% elitism - preserves top 4 individuals each generation
+
+# ====================================================================================
+# GENETIC OPERATORS
+# ====================================================================================
+operators:
+  crossover_rate: 0.70  # 70% probability of crossover
+  mutation_rate: 0.30  # 30% probability of mutation per gene
+  blx_alpha: 0.5  # Blend crossover alpha for threshold genes
+
+# ====================================================================================
+# SELECTION STRATEGY
+# ====================================================================================
+selection:
+  method: "tournament"
+  tournament_size: 3
+
+# ====================================================================================
+# FITNESS FUNCTION
+# ====================================================================================
+fitness:
+  weights:
+    mission_success: 0.70
+    operational_readiness: 0.15
+    flight_hours: 0.15
+  baseline_max_flight_hours: 4563.55
+
+# ====================================================================================
+# EVALUATION SETTINGS
+# ====================================================================================
+evaluation:
+  episodes_per_chromosome: 100  # 100 episodes for accurate fitness
+  parallel_workers: 6
+
+# ====================================================================================
+# CONVERGENCE & STOPPING CRITERIA
+# ====================================================================================
+convergence:
+  max_generations: 250  # Maximum 250 generations
+  early_stopping_patience: 50  # Stop if no improvement for 50 consecutive generations
+  improvement_threshold: 0.001  # Minimum improvement to count (0.1%)
+
+# ====================================================================================
+# CHECKPOINTING & LOGGING
+# ====================================================================================
+checkpointing:
+  enabled: true
+  frequency: 25  # Save every 25 generations
+  save_dir: "results/ga_simple_250_checkpoints"
+  filename_pattern: "checkpoint_gen{generation:03d}.pkl"
+
+logging:
+  verbose: true
+  log_dir: "results/ga_simple_250_logs"
+  log_frequency: 1
+  track_diversity: true
+  track_statistics: true
+
+# ====================================================================================
+# CHROMOSOME STRUCTURE (SIMPLE)
+# ====================================================================================
+chromosome:
+  tree_depth: 3  # Simple: depth 3 = 8 leaves
+  n_features: 5
+  n_splits: 7
+  n_leaves: 8
+  n_buckets: 4
+
+# ====================================================================================
+# FEATURE ENCODER
+# ====================================================================================
+feature_encoder:
+  config_path: "config/features/simple_dt.yaml"
+  features:
+    - observed_rul
+    - hours_to_major
+    - hours_to_minor
+    - da_line_deviation_positive
+    - da_line_deviation_negative
+
+# ====================================================================================
+# SIMULATION SETTINGS
+# ====================================================================================
+simulation:
+  config_path: "config/default.yaml"
+  seed: 42
+
+# ====================================================================================
+# OUTPUT & RESULTS
+# ====================================================================================
+output:
+  results_dir: "results/ga_simple_250_run_001"  # NEW unique folder
+  save_best_chromosome: true
+  save_final_population: true
+  save_fitness_history: true
+  generate_plots: true

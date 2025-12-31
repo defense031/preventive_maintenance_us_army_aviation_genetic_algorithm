@@ -1,0 +1,147 @@
+# ====================================================================================
+# GENETIC ALGORITHM CONFIGURATION - DEFAULT
+# ====================================================================================
+# Configuration for GA-optimized decision tree policy evolution
+# All parameters finalized based on user requirements for exploration-focused GA
+# ====================================================================================
+
+name: "ga_default"
+description: "Default GA configuration for decision tree policy optimization (exploration-focused)"
+version: "1.0.0"
+
+# ====================================================================================
+# POPULATION SETTINGS
+# ====================================================================================
+population:
+  size: 50  # Large population for broad search space coverage
+  elite_count: 4  # 8% elitism - preserves top 4 individuals each generation
+
+# ====================================================================================
+# GENETIC OPERATORS
+# ====================================================================================
+operators:
+  crossover_rate: 0.70  # 70% probability of crossover (vs returning clones)
+  mutation_rate: 0.30  # 30% probability of mutation per gene
+  blx_alpha: 0.5  # Blend crossover alpha for threshold genes (0.5 = moderate exploration)
+
+# ====================================================================================
+# SELECTION STRATEGY
+# ====================================================================================
+selection:
+  method: "tournament"  # Tournament selection (preferred over roulette)
+  tournament_size: 3  # Moderate selection pressure (balances diversity and fitness)
+  # Alternative: "roulette" for fitness-proportional selection (not recommended)
+
+# ====================================================================================
+# FITNESS FUNCTION
+# ====================================================================================
+fitness:
+  weights:
+    mission_success: 0.70  # 70% weight on mission success rate
+    operational_readiness: 0.15  # 15% weight on mean OR across episode
+    flight_hours: 0.15  # 15% weight on total flight hours (efficiency)
+
+  # Normalization constants (from baseline benchmark)
+  baseline_max_flight_hours: 4563.55  # Maximum flight hours from Episode 503 of corrected baseline
+  # Formula: Fitness = 0.70 × mission_success_rate + 0.15 × mean_OR + 0.15 × (total_flight_hours / 4563.55)
+
+# ====================================================================================
+# EVALUATION SETTINGS
+# ====================================================================================
+evaluation:
+  episodes_per_chromosome: 100  # Episodes to run for fitness evaluation (high accuracy)
+  parallel_workers: 6  # Number of CPU cores for parallel evaluation
+  # Estimated time per generation: ~20-25 minutes (50 pop × 100 episodes = 5000 episodes/gen)
+
+# ====================================================================================
+# CONVERGENCE & STOPPING CRITERIA
+# ====================================================================================
+convergence:
+  max_generations: 50  # Maximum number of generations to evolve
+  early_stopping_patience: 10  # Stop if no improvement for 10 consecutive generations
+  improvement_threshold: 0.001  # Minimum fitness improvement to count (0.1%)
+  # Estimated total time: 7-13 hours (assuming early stopping around 20-30 generations)
+
+# ====================================================================================
+# CHECKPOINTING & LOGGING
+# ====================================================================================
+checkpointing:
+  enabled: true  # Save population state for resume capability
+  frequency: 10  # Save checkpoint every 10 generations
+  save_dir: "results/ga_checkpoints"  # Directory for checkpoint files
+  filename_pattern: "checkpoint_gen{generation:03d}.pkl"  # e.g., checkpoint_gen010.pkl
+
+logging:
+  verbose: true  # Enable detailed progress logging
+  log_dir: "results/ga_logs"  # Directory for log files
+  log_frequency: 1  # Log statistics every N generations
+  track_diversity: true  # Track population diversity each generation
+  track_statistics: true  # Track fitness statistics (best, mean, worst, std)
+
+# ====================================================================================
+# CHROMOSOME STRUCTURE
+# ====================================================================================
+chromosome:
+  tree_depth: 3  # Decision tree depth (2^3 = 8 leaves)
+  n_features: 5  # Number of per-aircraft features
+  n_splits: 7  # Number of decision splits (2^3 - 1)
+  n_leaves: 8  # Number of terminal leaves (2^3)
+  n_buckets: 4  # Number of FMC buckets (1-4, plus bucket 0 for NMC)
+
+# ====================================================================================
+# FEATURE ENCODER
+# ====================================================================================
+feature_encoder:
+  config_path: "config/features/simple_dt.yaml"  # Path to feature configuration
+  features:  # Reference (defined in simple_dt.yaml)
+    - observed_rul  # Remaining useful life (bounds: [0, 500])
+    - hours_to_major  # Hours until major phase (bounds: [0, 508])
+    - hours_to_minor  # Hours until minor phase (bounds: [0, 258])
+    - da_line_deviation_positive  # Ahead of DA line (bounds: [0, 1])
+    - da_line_deviation_negative  # Behind DA line (bounds: [0, 1])
+
+# ====================================================================================
+# SIMULATION SETTINGS
+# ====================================================================================
+simulation:
+  config_path: "config/default.yaml"  # Path to simulation configuration
+  seed: 42  # Base random seed for reproducibility
+  # Actual episode seeds will be derived: seed + episode_idx
+
+# ====================================================================================
+# OUTPUT & RESULTS
+# ====================================================================================
+output:
+  results_dir: "results/ga_optimization"  # Base directory for GA results
+  save_best_chromosome: true  # Save best chromosome from each generation
+  save_final_population: true  # Save entire final population
+  save_fitness_history: true  # Save fitness progression over generations
+  generate_plots: true  # Generate fitness convergence plots
+
+# ====================================================================================
+# DESIGN RATIONALE (FOR REFERENCE)
+# ====================================================================================
+# This configuration creates an EXPLORATION-FOCUSED GA:
+#
+# 1. Large population (50): Broad search space coverage
+# 2. Low elitism (8%): Maintains diversity, prevents premature convergence
+# 3. High mutation (30%): Encourages exploration, escapes local optima
+# 4. Moderate tournament (3): Balanced selection pressure
+# 5. High evaluation budget (100 ep): Accurate fitness estimates reduce noise
+# 6. Mission-focused fitness (70%): Aligns with operational priorities
+#
+# Expected behavior:
+# - Prioritizes finding global optima over fast convergence
+# - More robust to rugged fitness landscapes with many local optima
+# - Slower convergence but higher quality final solution
+# - Well-suited for complex decision tree optimization with 24-gene chromosomes
+#
+# Performance expectations:
+# - Per generation: ~20-25 minutes (6 cores, 5000 episodes)
+# - Full 50 generations: ~16-21 hours (unlikely due to early stopping)
+# - Expected run: ~20-30 generations = 7-13 hours
+# - Checkpoint every 10 gen: Can resume if interrupted
+#
+# Target: Beat baseline by ≥5% on mission success or OR
+# Baseline (corrected): Mean OR 56.54%, Mission Success 64.55%
+# ====================================================================================

@@ -1,0 +1,129 @@
+# ====================================================================================
+# GENETIC ALGORITHM CONFIGURATION - CLOUD 5000 GENERATIONS
+# ====================================================================================
+# High-capacity configuration optimized for cloud deployment (EC2 64-96 cores)
+# Extended exploration with larger population and tighter convergence threshold
+# ====================================================================================
+
+name: "ga_cloud_5000"
+description: "Cloud-optimized: 5000 gen, 100 pop, 250 patience, 0.0005 threshold"
+version: "1.0.0"
+
+# ====================================================================================
+# POPULATION SETTINGS
+# ====================================================================================
+population:
+  size: 100  # 2x larger for broader search coverage
+  elite_count: 8  # 8% elitism - preserve top 8 solutions
+
+# ====================================================================================
+# GENETIC OPERATORS
+# ====================================================================================
+operators:
+  crossover_rate: 0.70
+  mutation_rate: 0.30  # Legacy - kept for backwards compat
+  blx_alpha: 0.5
+  # Adaptive mutation - slower decay for longer exploration
+  mutation_start_rate: 0.50  # Start at 50% per-gene mutation
+  mutation_min_rate: 0.03  # Decay to 3% (lower floor for fine-tuning)
+  mutation_start_sigma: 0.50  # Start at 50% of range
+  mutation_min_sigma: 0.05  # Decay to 5% (tighter for exploitation)
+  mutation_decay_point: 0.60  # Reach min at 60% (gen 3000) - more exploration time
+
+# ====================================================================================
+# SELECTION STRATEGY
+# ====================================================================================
+selection:
+  method: "tournament"
+  tournament_size: 3
+
+# ====================================================================================
+# FITNESS FUNCTION
+# ====================================================================================
+fitness:
+  weights:
+    mission_success: 0.70
+    operational_readiness: 0.15
+    flight_hours: 0.15
+  baseline_max_flight_hours: 4563.55
+
+# ====================================================================================
+# EVALUATION SETTINGS
+# ====================================================================================
+evaluation:
+  episodes_per_chromosome: 100  # Keep 100 for statistical reliability
+  parallel_workers: 48  # Tune based on EC2 instance (c7a.24xlarge = 96 vCPUs, use 48-80)
+
+# ====================================================================================
+# CONVERGENCE & STOPPING CRITERIA
+# ====================================================================================
+convergence:
+  max_generations: 5000  # Extended exploration
+  early_stopping_patience: 250  # Stop after 250 gens without improvement
+  improvement_threshold: 0.0005  # Tighter threshold (0.05%)
+
+# ====================================================================================
+# CHECKPOINTING & LOGGING
+# ====================================================================================
+checkpointing:
+  enabled: true
+  frequency: 50  # Save every 50 generations (important for long runs)
+  save_dir: "results/ga_cloud_5000_checkpoints"
+  filename_pattern: "checkpoint_gen{generation:04d}.pkl"
+
+logging:
+  verbose: true
+  log_dir: "results/ga_cloud_5000_logs"
+  log_frequency: 1
+  track_diversity: true
+  track_statistics: true
+
+# ====================================================================================
+# CHROMOSOME STRUCTURE (MEDIUM - Hierarchical)
+# ====================================================================================
+chromosome:
+  config_type: "medium"  # Fleet split + 2 per-aircraft subtrees
+  tree_depth: 3
+  n_features: 5
+  n_fleet_features: 7
+  n_splits: 7
+  n_leaves: 8
+  n_buckets: 4
+  n_genes: 31
+
+# ====================================================================================
+# FEATURE ENCODER
+# ====================================================================================
+feature_encoder:
+  config_path: "config/features/medium_dt.yaml"
+  features:
+    - observed_rul
+    - hours_to_major
+    - hours_to_minor
+    - da_line_deviation_positive
+    - da_line_deviation_negative
+  fleet_features:
+    - fmc_count
+    - mean_observed_rul
+    - min_observed_rul
+    - mean_hours_to_major
+    - min_hours_to_major
+    - mean_hours_to_minor
+    - min_hours_to_minor
+
+# ====================================================================================
+# SIMULATION SETTINGS
+# ====================================================================================
+simulation:
+  config_path: "config/default.yaml"
+  seed: 42
+
+# ====================================================================================
+# OUTPUT & RESULTS
+# ====================================================================================
+output:
+  results_dir: "results/ga_cloud_5000_run_001"
+  save_best_chromosome: true
+  save_final_population: true
+  save_fitness_history: true
+  generate_plots: true

@@ -1,0 +1,68 @@
+# Aviation Genetic Algorithm Simulation - Default Configuration
+# Ported from: aviation_hierarchical_sim_v2/parameters_v2/parameter_registry_shell.R
+
+# Fleet parameters
+num_aircraft: 8
+sim_days: 365
+seed: null  # null = random, or set integer for reproducibility
+fiscal_year_start_month: 10  # October
+
+# Maintenance duration ranges (days)
+maintenance_durations:
+  preventive_min: 1
+  preventive_max: 4
+  reactive_min: 5
+  reactive_max: 15
+  minor_phase_min: 8
+  minor_phase_max: 14
+  major_phase_min: 38
+  major_phase_max: 50
+
+# RUL (Remaining Useful Life) parameters
+rul:
+  reset_min: 25.0   # Min RUL after maintenance (flight hours)
+  reset_max: 300.0  # Max RUL after maintenance (flight hours)
+  accuracy_mode: "very_high"  # Options: perfect (0.00), very_high (0.05), high (0.10), low (0.25), very_low (0.50), not_visible
+
+# Phase maintenance thresholds
+phase:
+  minor_threshold: 250.0  # Minor phase at 250 flight hours
+  major_threshold: 500.0  # Major phase at 500 flight hours
+  minor_window: 100.0     # Open window 100hrs before minor
+  major_window: 100.0     # Open window 100hrs before major
+
+# Fleet initialization (mid-lifecycle starting conditions)
+fleet_init:
+  major_hours_min: 25.0   # Min hours since major phase at start
+  major_hours_max: 300.0  # Max hours since major phase at start
+  rul_correlation: 0.3    # RUL degradation correlation (0=independent, 1=fully correlated)
+
+# Token budget (single pool with weighted consumption)
+tokens:
+  annual_budget: 120  # Total annual tokens (divided quarterly: base = budget // 4, remainder to Q1)
+  preventive_weight: 1  # Tokens consumed per preventive maintenance
+  reactive_weight: 1  # Tokens consumed per reactive maintenance
+  minor_phase_weight: 3  # Tokens consumed per minor phase maintenance
+  major_phase_weight: 10  # Tokens consumed per major phase maintenance
+
+# Mission tempo
+mission:
+  tempo_regime: "baseline"  # Options: baseline, surge, low
+  min_sortie_hours: 4.0
+  max_sortie_hours: 8.0
+  forecast_days: 14
+
+# Maintenance capacity (slots)
+preventive_slots: 2
+phase_slots: 1
+
+# Decision tree policy parameters
+policy_params:
+  rul_threshold: 100  # RUL threshold for preventive maintenance (hours)
+  early_phase_buckets: [1, 2]  # Buckets subject to early phase enforcement (binding)
+  # Note: early_phase_window is chromosome-encoded (Full config only, 0-100 hours)
+  # Simple/Medium configs: NO early phase window (purely reactive phase maintenance)
+
+# Performance flags
+verbose: false
+collect_detailed_data: false  # Disable for GA speed (5-10x faster)

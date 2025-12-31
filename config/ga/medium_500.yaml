@@ -1,0 +1,130 @@
+# ====================================================================================
+# GENETIC ALGORITHM CONFIGURATION - MEDIUM 500 GENERATIONS
+# ====================================================================================
+# Extended run with path-aware threshold constraints
+# 500 generations, early stopping after 100 gens without improvement > 0.001
+# Medium config: 1 fleet split + 2 per-aircraft subtrees (31 genes)
+# ====================================================================================
+
+name: "ga_medium_500"
+description: "Medium config with 500 generations, 100-gen patience, path-aware constraints"
+version: "1.0.0"
+
+# ====================================================================================
+# POPULATION SETTINGS
+# ====================================================================================
+population:
+  size: 50  # Large population for broad search space coverage
+  elite_count: 4  # 8% elitism - preserves top 4 individuals each generation
+
+# ====================================================================================
+# GENETIC OPERATORS
+# ====================================================================================
+operators:
+  crossover_rate: 0.70  # 70% probability of crossover
+  mutation_rate: 0.30  # Legacy - kept for backwards compat
+  blx_alpha: 0.5  # Blend crossover alpha for threshold genes
+  # Adaptive mutation - rate and sigma decay over generations
+  mutation_start_rate: 0.50  # Start at 50% per-gene mutation rate
+  mutation_min_rate: 0.05  # Decay to 5% by 75% of max_gen
+  mutation_start_sigma: 0.50  # Start at 50% of feature range
+  mutation_min_sigma: 0.10  # Decay to 10% of feature range
+  mutation_decay_point: 0.75  # Reach min values at 75% of max_gen
+
+# ====================================================================================
+# SELECTION STRATEGY
+# ====================================================================================
+selection:
+  method: "tournament"
+  tournament_size: 3
+
+# ====================================================================================
+# FITNESS FUNCTION
+# ====================================================================================
+fitness:
+  weights:
+    mission_success: 0.70
+    operational_readiness: 0.15
+    flight_hours: 0.15
+  baseline_max_flight_hours: 4563.55
+
+# ====================================================================================
+# EVALUATION SETTINGS
+# ====================================================================================
+evaluation:
+  episodes_per_chromosome: 100  # 100 episodes for accurate fitness
+  parallel_workers: 6
+
+# ====================================================================================
+# CONVERGENCE & STOPPING CRITERIA
+# ====================================================================================
+convergence:
+  max_generations: 500  # Maximum 500 generations
+  early_stopping_patience: 100  # Stop if no improvement for 100 consecutive generations
+  improvement_threshold: 0.001  # Minimum improvement to count (0.1%)
+
+# ====================================================================================
+# CHECKPOINTING & LOGGING
+# ====================================================================================
+checkpointing:
+  enabled: true
+  frequency: 25  # Save every 25 generations
+  save_dir: "results/ga_medium_500_checkpoints"
+  filename_pattern: "checkpoint_gen{generation:03d}.pkl"
+
+logging:
+  verbose: true
+  log_dir: "results/ga_medium_500_logs"
+  log_frequency: 1
+  track_diversity: true
+  track_statistics: true
+
+# ====================================================================================
+# CHROMOSOME STRUCTURE (MEDIUM)
+# ====================================================================================
+chromosome:
+  config_type: "medium"  # Hierarchical: 1 fleet split + 2 subtrees
+  tree_depth: 3  # Per-aircraft tree depth = 8 leaves per subtree
+  n_features: 5  # Per-aircraft features
+  n_fleet_features: 7  # Fleet-level features
+  n_splits: 7  # Splits per subtree
+  n_leaves: 8  # Leaves per subtree
+  n_buckets: 4
+  n_genes: 31  # 2 + 2*14 + 1 = 31
+
+# ====================================================================================
+# FEATURE ENCODER
+# ====================================================================================
+feature_encoder:
+  config_path: "config/features/medium_dt.yaml"  # Per-aircraft features
+  features:
+    - observed_rul
+    - hours_to_major
+    - hours_to_minor
+    - da_line_deviation_positive
+    - da_line_deviation_negative
+  fleet_features:
+    - fmc_count
+    - mean_observed_rul
+    - min_observed_rul
+    - mean_hours_to_major
+    - min_hours_to_major
+    - mean_hours_to_minor
+    - min_hours_to_minor
+
+# ====================================================================================
+# SIMULATION SETTINGS
+# ====================================================================================
+simulation:
+  config_path: "config/default.yaml"
+  seed: 42
+
+# ====================================================================================
+# OUTPUT & RESULTS
+# ====================================================================================
+output:
+  results_dir: "results/ga_medium_500_run_001"
+  save_best_chromosome: true
+  save_final_population: true
+  save_fitness_history: true
+  generate_plots: true
